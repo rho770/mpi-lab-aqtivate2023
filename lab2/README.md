@@ -1,4 +1,4 @@
-# PDC Summer School 2022: MPI Lab 2
+# AQTIVATE Workshop 2023: MPI Lab 2
 
 ## Introduction
 
@@ -6,61 +6,59 @@ In this lab you will get more familiar with MPI I/O and MPI performance measurem
 
 ### Goals
 
-Get experience in MPI I/O as well as MPI performance.
+- Get experience with MPI collective operations
+- Continue to explore MPI performance.
 
 ### Duration
 
-3 hours
+1.5 hours
 
-### Source Codes
+## Exercise 1: Send data across all processes (broadcast)
 
-- MPI I/O. Serial hello world in C and Fortran ([hello_mpi.c](hello_mpi.c) and [hello_mpi.f90](hello_mpi.f90))
-- MPI Derived types and I/O. Serial STL file reader in C and Fortran ([mpi_derived_types.c](mpi_derived_types.c) and [mpi_derived_types.f90](mpi_derived_types.f90)
-- MPI Latency: C and Fortran ([mpi_latency.c](mpi_latency.c) and [mpi_latency.f90](mpi_latency.f90))
-- MPI Bandwidth : C and Fortran ([mpi_bandwidth.c](mpi_bandwidth.c) and [mpi_bandwidth.f90](mpi_bandwidth.f90))
-- MPI Bandwidth Non-Blocking: C and Fortran ([mpi_bandwidth-nonblock.c](mpi_bandwidth-nonblock.c) and [mpi_bandwidth-nonblock.f90](mpi_bandwidth-nonblock.f90))
+Write a program that takes data from process zero and sends it to all of the other processes. That is, process i should receive the data and send it to process i+1, until the last process is reached. 
 
-### Preparation
+*Figure 1. Broadcast*
 
-In preparation for this lab, read the "General Instructions for the MPI Labs".
+![Ring](ring.png)
 
-## Exercise 1: MPI I/O
+Assume that the data consists of a single integer. For simplicity set the value for the first process directly in the code. You may want to use ``MPI_Send`` and ``MPI_Recv`` in your solution.
 
-MPI I/O is used so that results can be written to the same file in parallel. Take the serial hello world programs and modify them so that instead of writing the output to screen the output is written to a file using MPI I/O.
+Implement the same operation using ``MPI Bcast`` and compare performance using ``MPI_Wtime``.
 
-The simplest solution is likely to be for you to create a character buffer, and then use the ``MPI_File_write_at`` function.
+## Exercise 2: Global reductions
 
-## Exercise 2: MPI I/O and derived types
+Repeat the previous exercise for global reductions.
 
-Take the serial stl reader and modify it such that the stl file is read (and written) in parallel using collective MPI I/O. Use derived types such that the file can be read/written with a maximum of 3 I/O operations per read and write.
+## Exercise 3: Use P2P communication for the "Game of Life"
 
-The simplest solution is likely to create a derived type for each triangle, and then use the ``MPI_File_XXXX_at_all`` function. A correct solution will have the same MD5 hash for both stl models (input and output), unless the order of the triangles has been changed.
+In this exercise, you continue learning about point-to-point message-passing routines in MPI.  After completing this exercise, you should be able to write the real parallel MPI code to solve the Game of Life. [Here is some background on the "Game of Life"](Game_of_life.md), in case you are new to the problem.
 
-```
-md5sum out.stl data/sphere.stl
-822aba6dc20cc0421f92ad50df95464c  out.stl
-822aba6dc20cc0421f92ad50df95464c  data/sphere.stl
-```
+To start this exercise, add the initialization and finalization routines to the serial "Game of Life" code. This will effectively duplicate the exact same calculation on each processor. In order to show that the code is performing as expected, add statements to print overall size, and the rank of the local process. Don't forget to add the MPI header file.
 
-## Exercise 3: Bandwidth and latency between nodes
+### Domain Decomposition
 
-Use ``mpi_wtime`` to compute latency and bandwidth with the bandwidth and latency codes listed above.
+In order to truly run the "Game of Life" program in parallel, we must set up our domain decomposition, i.e., divide the domain into chunks and send one chunk to each processor. In the current exercise, we will limit ourselves to two processors. If you are writing your code in C, divide the domain with a horizontal line, so the upper half will be processed on one processor and the lower half on a different processor. If you are using Fortran, divide the domain with a vertical line, so the left half goes to one processor and the right half to another.
 
-For this exercise you should compare different setups where (a) both MPI ranks are on the same node, e.g.
+Hint: Although this can be done with different kinds of sends and receives, use blocking sends and receives for the current problem. We have chosen the configuration described above because in C arrays, rows are contiguous, and in Fortran columns are contiguous. This approach allows the specification of the initial array location and the number of words in the send and receive routines.
 
-```
-salloc -p shared --nodes=1 --cpus-per-task=2 -t 0:30:00 -A edu22.summer --reservation=<name-of-reservation>
-mpirun -n 2 ./mpi_latency.x
-```
+One issue that you need to consider is that of internal domain boundaries. Figure 2 shows the "left-right" domain decomposition described above. Each cell needs information from all adjacent cells to determine its new state. With domain decomposition, some of the required cells no longer are available on the local processor. A common way to tackle this problem is through the use of ghost cells. In the current example, a column of ghost cells is added to the right side of the left domain, and a column is also added to the left side of the right domain (shown in Figure 3). After each time step, the ghost cells are filled by passing the appropriate data from the other processor. You may want to refer to the figure in the [background on the "Game of Life"](Game_of_life.md) to see how to fill the other ghost cells.
 
-or on separate nodes, e.g.
+*Figure 2. Left-right domain decomposition*
 
-```
-salloc -p main --nodes=2 --cpus-per-task=2 -t 0:30:00 -A edu22.summer
-mpirun -n 2 ./mpi_latency.x
-```
+<img src="lr_decomp.jpg" alt="Figure 1" width="400px"/>
 
-Compare the different results and reason about the observed values.
+*Figure 2. Ghost cells*
+
+<img src="ghost.jpg" alt="Figure 2" width="400px"/>
+
+
+### Your Challenge
+
+Implement the domain decomposition described above, and add message passing to the ghost cells. Don't forget to divide the domain using a horizontal line for C and a vertical line for Fortran. In a subsequent lesson we will examine domain decomposition in the opposite direction.
+
+### Source code
+
+- Game of Life: Serial C and Fortran ([game_of_life-serial.c](game_of_life-serial.c) and [game_of_life-serial.f90](game_of_life-serial.f90)) 
 
 ## Acknowledgment
 

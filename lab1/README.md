@@ -6,21 +6,12 @@ In this lab, you will gain familiarity with MPI program structure, and point-to-
 
 ### Goals
 
-Get familiar with MPI program structure, and point-to-point communication by writing a few simple MPI programs.
+- Get familiar with MPI program structure and point-to-point communication by writing a few simple MPI programs.
+- Explore MPI performance
 
 ### Duration
 
 1.5 hours
-
-### Source Codes
-
-1. Hello, World: Serial C and Fortran ([hello_mpi.c](hello_mpi.c) and [hello_mpi.f90](hello_mpi.f90)) 
-2. Send data across all processes : No source provided
-3. Calculation of $\pi$: Serial C and Fortran ([pi_serial.c](pi_serial.c) and [pi_serial.f90](pi_serial.f90))
-4. (Optional) Parallel Search: Serial C and Fortran ([parallel_search-serial.c](parallel_search-serial.c) 
-  and [parallel_search-serial.f90](parallel_search-serial.f90)),
-  input file ([b.data](b.data)), and output file ([reference.found.data](reference.found.data))
-5. (Optional) Game of Life: Serial C and Fortran ([game_of_life-serial.c](game_of_life-serial.c) and [game_of_life-serial.f90](game_of_life-serial.f90)) 
 
 ### Preparation
 
@@ -30,17 +21,37 @@ In preparation for this lab, read the "General Instructions for the MPI Labs".
 
 Compile and run the "Hello, World" program found in the lecture. Make sure you understand how each processors prints its rank as well as the total number of processors in the communicator ``MPI_COMM_WORLD``.
 
-## Exercise 2: Send data across all processes (broadcast)
+### Source Code(s)
 
-Write a program that takes data from process zero and sends it to all of the other processes. That is, process i should receive the data and send it to process i+1, until the last process is reached. 
+- Hello, World: Serial C and Fortran ([hello_mpi.c](hello_mpi.c) and [hello_mpi.f90](hello_mpi.f90)) 
 
-*Figure 1. Broadcast*
+## Exercise 2: Bandwidth and latency between nodes
 
-![Ring](ring.png)
+Use ``MPI_Wtime`` to compute latency and bandwidth with the bandwidth and latency codes listed above.
 
-Assume that the data consists of a single integer. For simplicity set the value for the first process directly in the code. You may want to use ``MPI_Send`` and ``MPI_Recv`` in your solution.
+For this exercise you should compare different setups where (a) both MPI ranks are on the same node, e.g.
 
-## Exercise 3: Find $\pi$ using P2P communication (master/worker)
+```
+salloc -p shared --nodes=1 --cpus-per-task=2 -t 0:01:00 --account=<account> --reservation=<name-of-reservation>
+srun -n 2 ./mpi_latency.x
+```
+
+or on separate nodes, e.g.
+
+```
+salloc -p main --nodes=2 --cpus-per-task=2 -t 0:01:00 --account=<account> --reservation=<name-of-reservation>
+srun -n 2 ./mpi_latency.x
+```
+
+Compare the different results and reason about the observed values.
+
+### Source Codes
+
+- MPI Latency: C and Fortran ([mpi_latency.c](mpi_latency.c) and [mpi_latency.f90](mpi_latency.f90))
+- MPI Bandwidth : C and Fortran ([mpi_bandwidth.c](mpi_bandwidth.c) and [mpi_bandwidth.f90](mpi_bandwidth.f90))
+- MPI Bandwidth Non-Blocking: C and Fortran ([mpi_bandwidth-nonblock.c](mpi_bandwidth-nonblock.c) and [mpi_bandwidth-nonblock.f90](mpi_bandwidth-nonblock.f90))
+
+## Exercise 2: Find $\pi$ using P2P communication (master/worker)
 
 The given program calculates $\pi$ using an integral approximation. Take the serial version of the program and modify it to run in parallel.
 
@@ -54,7 +65,11 @@ Now parallelize the serial program. Use only the following six basic MPI calls: 
 
 Hint: As the number of darts and rounds is hard coded then all workers already know it, but each worker should calculate how many are in its share of the DARTS so it does its share of the work. When done, each worker sends its partial sum back to the master, which receives them and calculates the final sum.
 
-## Exercise 4: Use P2P communication for doing "Parallel Search"
+### Source Code
+
+- Calculation of $\pi$: Serial C and Fortran ([pi_serial.c](pi_serial.c) and [pi_serial.f90](pi_serial.f90))
+
+## Exercise 3: Use P2P communication for doing "Parallel Search"
 
 In this exercise, you learn about the heart of MPI: point-to-point message-passing routines in both their blocking and non-blocking forms as well as the various modes of communication.
 
@@ -77,32 +92,11 @@ outfilename="found.data_" // rankchar
 open(unit=11, file=outfilename)
 ```
 
-## Exercise 5: Use P2P communication for the "Game of Life"
+### Source Code
 
-In this exercise, you continue learning about point-to-point message-passing routines in MPI.  After completing this exercise, you should be able to write the real parallel MPI code to solve the Game of Life. [Here is some background on the "Game of Life"](Game_of_life.md), in case you are new to the problem.
-
-To start this exercise, add the initialization and finalization routines to the serial "Game of Life" code. This will effectively duplicate the exact same calculation on each processor. In order to show that the code is performing as expected, add statements to print overall size, and the rank of the local process. Don't forget to add the MPI header file.
-
-### Domain Decomposition
-
-In order to truly run the "Game of Life" program in parallel, we must set up our domain decomposition, i.e., divide the domain into chunks and send one chunk to each processor. In the current exercise, we will limit ourselves to two processors. If you are writing your code in C, divide the domain with a horizontal line, so the upper half will be processed on one processor and the lower half on a different processor. If you are using Fortran, divide the domain with a vertical line, so the left half goes to one processor and the right half to another.
-
-Hint: Although this can be done with different kinds of sends and receives, use blocking sends and receives for the current problem. We have chosen the configuration described above because in C arrays, rows are contiguous, and in Fortran columns are contiguous. This approach allows the specification of the initial array location and the number of words in the send and receive routines.
-
-One issue that you need to consider is that of internal domain boundaries. Figure 2 shows the "left-right" domain decomposition described above. Each cell needs information from all adjacent cells to determine its new state. With domain decomposition, some of the required cells no longer are available on the local processor. A common way to tackle this problem is through the use of ghost cells. In the current example, a column of ghost cells is added to the right side of the left domain, and a column is also added to the left side of the right domain (shown in Figure 3). After each time step, the ghost cells are filled by passing the appropriate data from the other processor. You may want to refer to the figure in the [background on the "Game of Life"](Game_of_life.md) to see how to fill the other ghost cells.
-
-*Figure 2. Left-right domain decomposition*
-
-<img src="lr_decomp.jpg" alt="Figure 1" width="400px"/>
-
-*Figure 2. Ghost cells*
-
-<img src="ghost.jpg" alt="Figure 2" width="400px"/>
-
-
-### Your Challenge
-
-Implement the domain decomposition described above, and add message passing to the ghost cells. Don't forget to divide the domain using a horizontal line for C and a vertical line for Fortran. In a subsequent lesson we will examine domain decomposition in the opposite direction.
+- Parallel Search: Serial C and Fortran ([parallel_search-serial.c](parallel_search-serial.c) 
+  and [parallel_search-serial.f90](parallel_search-serial.f90)),
+  input file ([b.data](b.data)), and output file ([reference.found.data](reference.found.data))
 
 ## Acknowledgment
 
