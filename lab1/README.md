@@ -51,7 +51,7 @@ Compare the different results and reason about the observed values.
 - MPI Bandwidth : C and Fortran ([mpi_bandwidth.c](mpi_bandwidth.c) and [mpi_bandwidth.f90](mpi_bandwidth.f90))
 - MPI Bandwidth Non-Blocking: C and Fortran ([mpi_bandwidth-nonblock.c](mpi_bandwidth-nonblock.c) and [mpi_bandwidth-nonblock.f90](mpi_bandwidth-nonblock.f90))
 
-## Exercise 2: Find $\pi$ using P2P communication (master/worker)
+## Exercise 3: Find $\pi$ using P2P communication (master/worker)
 
 The given program calculates $\pi$ using an integral approximation. Take the serial version of the program and modify it to run in parallel.
 
@@ -69,7 +69,7 @@ Hint: As the number of darts and rounds is hard coded then all workers already k
 
 - Calculation of $\pi$: Serial C and Fortran ([pi_serial.c](pi_serial.c) and [pi_serial.f90](pi_serial.f90))
 
-## Exercise 3: Use P2P communication for doing "Parallel Search"
+## Exercise 4: Use P2P communication for doing "Parallel Search"
 
 In this exercise, you learn about the heart of MPI: point-to-point message-passing routines in both their blocking and non-blocking forms as well as the various modes of communication.
 
