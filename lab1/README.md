@@ -32,14 +32,14 @@ Use ``MPI_Wtime`` to compute latency and bandwidth with the bandwidth and latenc
 For this exercise you should compare different setups where (a) both MPI ranks are on the same node, e.g.
 
 ```
-salloc -p shared --nodes=1 --cpus-per-task=2 -t 0:01:00 --account=<account> --reservation=<name-of-reservation>
+salloc -p shared --nodes=1 --ntasks-per-node=2 -t 0:01:00 --account=<account> --reservation=<name-of-reservation>
 srun -n 2 ./mpi_latency.x
 ```
 
 or on separate nodes, e.g.
 
 ```
-salloc -p main --nodes=2 --cpus-per-task=2 -t 0:01:00 --account=<account> --reservation=<name-of-reservation>
+salloc -p main --nodes=2 --ntasks-per-node=1 -t 0:01:00 --account=<account> --reservation=<name-of-reservation>
 srun -n 2 ./mpi_latency.x
 ```
 

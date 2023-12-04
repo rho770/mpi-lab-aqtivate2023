@@ -34,7 +34,7 @@ ftn my_prog.f90
 First it is necessary to book a node for interactive use:
 
 ```
-salloc -p shared --nodes=1 --cpus-per-task=32 -t 0:05:00 --account=edu23.aqti --reservation=<name-of-reservation>
+salloc -p shared --nodes=1 --ntasks-per-node=32 -t 0:05:00 --account=edu23.aqti --reservation=<name-of-reservation>
 ```
 
 Then use the ``srun`` command is used to launch an MPI application:
